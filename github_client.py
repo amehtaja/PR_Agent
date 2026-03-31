@@ -1,5 +1,5 @@
 """
-GitHub API helpers for Steps 5 and 6.
+GitHub API helpers for Steps 5, 6, and 8.
 """
 
 import json
@@ -26,27 +26,11 @@ def _request(method, path, token, body=None):
 
 
 def get_open_prs(repo, branch, token):
-    """
-    STEP 5 — Check if PR exists
-
-    Input:  repo, branch, token
-    Call:   get_open_prs(repo, branch, token)
-    Output:
-      Case 1 (no PR):     []
-      Case 2 (PR exists): [{"number": 12, "title": "Old PR"}]
-    """
     owner = repo.split("/")[0]
     return _request("GET", f"/repos/{repo}/pulls?state=open&head={owner}:{branch}", token)
 
 
 def get_diff(repo, base, head, token):
-    """
-    STEP 6 — Get code diff
-
-    Input:  repo, base="main", head=branch, token
-    Call:   get_diff(repo, base, head, token)
-    Output: "+ def login():\\n+     return \\"success\\""
-    """
     url = f"{API}/repos/{repo}/compare/{base}...{head}"
     req = urllib.request.Request(url, headers={
         "Authorization": f"token {token}",
@@ -58,3 +42,15 @@ def get_diff(repo, base, head, token):
     except urllib.error.HTTPError as e:
         print(f"[STEP 6] Diff failed: {e.code}: {e.read().decode()}")
         raise
+
+
+def create_pr(repo, title, body, head, base, token):
+    data = {"title": title, "body": body, "head": head, "base": base}
+    result = _request("POST", f"/repos/{repo}/pulls", token, body=data)
+    return {"number": result["number"], "html_url": result["html_url"]}
+
+
+def update_pr(repo, pr_number, title, body, token):
+    data = {"title": title, "body": body}
+    result = _request("PATCH", f"/repos/{repo}/pulls/{pr_number}", token, body=data)
+    return {"number": result["number"], "html_url": result["html_url"]}
